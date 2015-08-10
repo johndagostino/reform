@@ -1,4 +1,5 @@
 require "lotus/validations"
+require "reform/form/validation/group"
 
 # Implements ::validates and friends, and #valid?.
 module Reform::Form::Lotus
