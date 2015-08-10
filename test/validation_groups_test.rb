@@ -47,23 +47,32 @@ module Reform::Form::Validation
 
   def valid?
     result = true
+    @errors ||= Reform::Form::Lotus::Errors.new
+
+    _errors = Reform::Form::Lotus::Errors.new
 
     self.class.validation_groups.each do |name, v|
       group, options = v
 
-      validator = validator_for(group.validations)
+      # validator = validator_for(group.validations)
+
+      validator = Lotus::Validations::Validator.new(group.validations,
+        @fields, _errors)
+
+      puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
+
       errs = validator.validate
-      puts "@@@@@ #{result.inspect}"
+      @errors.merge! _errors, [] # FIXME: why is this not
 
-      result &= errs.empty?
-
-      result
+      result &= _errors.empty?
     end
+
+    result
   end
 end
 
 class ValidationGroupsTest < MiniTest::Spec
-  Session = Struct.new(:username, :email)
+  Session = Struct.new(:username, :email, :password)
   Album = Struct.new(:name, :songs, :artist)
   Artist = Struct.new(:name)
 
@@ -74,6 +83,7 @@ class ValidationGroupsTest < MiniTest::Spec
 
     property :username
     property :email
+    property :password
 
     validation :default do
       validates :username, presence: true
@@ -82,15 +92,32 @@ class ValidationGroupsTest < MiniTest::Spec
 
     validation :email, if: :default do
       # validate :email_ok? # FIXME: implement that.
-      validates :email, size: 20
+      validates :email, size: 3
+    end
+
+    validation :nested, if: :default do
+      validates :password, presence: true, size: 1
     end
   end
 
   let (:form) { SessionForm.new(Session.new) }
 
-  # valid
+  # valid.
+  it do
+    form.validate({username: "Helloween", email: "yep", password: "9"}).must_equal true
+    form.errors.messages.inspect.must_equal "[]"
+  end
+
+  # invalid.
   it do
     form.validate({}).must_equal false
-    form.errors.messages.inspect.must_equal "{}"
+    form.errors.messages.inspect.must_equal %{["username", "email", "password"]}
+  end
+
+  # partially invalid.
+  # 2nd group fails
+  it do
+    form.validate(username: "Helloween", email: "yo").must_equal false
+    form.errors.messages.inspect.must_equal %{["email"]}
   end
 end
