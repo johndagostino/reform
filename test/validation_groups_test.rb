@@ -48,6 +48,7 @@ module Reform::Form::Validation
   def valid?
     result = true
     @errors ||= Reform::Form::Lotus::Errors.new
+    results = {}
 
     _errors = Reform::Form::Lotus::Errors.new
 
@@ -61,8 +62,12 @@ module Reform::Form::Validation
 
       puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
-      errs = validator.validate
-      @errors.merge! _errors, [] # FIXME: why is this not
+      depends_on = options[:if]
+      if depends_on.nil? or results[depends_on].empty?
+        results[name] = validator.validate
+      end
+
+      @errors.merge! _errors, [] # FIXME: merge with result set.
 
       result &= _errors.empty?
     end
@@ -111,7 +116,7 @@ class ValidationGroupsTest < MiniTest::Spec
   # invalid.
   it do
     form.validate({}).must_equal false
-    form.errors.messages.inspect.must_equal %{["username", "email", "password"]}
+    form.errors.messages.inspect.must_equal %{["username", "email"]}
   end
 
   # partially invalid.

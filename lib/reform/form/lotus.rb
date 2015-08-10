@@ -12,7 +12,7 @@ module Reform::Form::Lotus
     end
 
     def inspect
-      @errors.to_s
+      @errors.keys.to_s
     end
 
     def messages
