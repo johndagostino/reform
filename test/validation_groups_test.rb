@@ -2,7 +2,7 @@ require "test_helper"
 require "reform/form/lotus"
 
 class ValidationGroupsTest < MiniTest::Spec
-  Session = Struct.new(:username, :email, :password)
+  Session = Struct.new(:username, :email, :password, :confirm_password)
   Album = Struct.new(:name, :songs, :artist)
   Artist = Struct.new(:name)
 
@@ -14,6 +14,7 @@ class ValidationGroupsTest < MiniTest::Spec
     property :username
     property :email
     property :password
+    property :confirm_password
 
     validation :default do
       validates :username, presence: true
@@ -27,6 +28,10 @@ class ValidationGroupsTest < MiniTest::Spec
 
     validation :nested, if: :default do
       validates :password, presence: true, size: 1
+    end
+
+    validation :confirm, if: :default, after: :email do
+      validates :confirm_password, size: 2
     end
   end
 
@@ -54,5 +59,10 @@ class ValidationGroupsTest < MiniTest::Spec
   it do
     form.validate(username: "Helloween", email: "yo!").must_equal false
     form.errors.messages.inspect.must_equal %{["password"]}
+  end
+  # 4th group with after: fails.
+  it do
+    form.validate(username: "Helloween", email: "yo!", password: "", confirm_password: "9").must_equal false
+    form.errors.messages.inspect.must_equal %{["confirm_password"]}
   end
 end

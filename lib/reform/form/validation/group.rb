@@ -12,10 +12,21 @@ module Reform::Form::Validation
     attr_reader :validations
   end
 
+  # Set of Validation::Group objects.
+  class Groups < Array
+    def add(name, options)
+      i = size
+      i = find_index { |el| el.first == options[:after] } + 1 if options[:after]
+
+      self.insert(i, [name, group = Group.new, options])
+      group
+    end
+  end
+
   module ClassMethods
     def validation(name, options={}, &block)
-      @groups ||= {}
-      @groups[name] = [group = Group.new, options]
+      @groups ||= Groups.new # TODO: inheritable_attr with Inheritable::Hash
+      group = @groups.add(name, options)
       group.instance_exec(&block)
     end
 
@@ -49,8 +60,8 @@ module Reform::Form::Validation
 
     _errors = Reform::Form::Lotus::Errors.new
 
-    self.class.validation_groups.each do |name, v|
-      group, options = v
+    self.class.validation_groups.each do |cfg|
+      name, group, options = cfg
 
       # validator = validator_for(group.validations)
 
