@@ -15,11 +15,15 @@ module Reform::Form::Validation
   # Set of Validation::Group objects.
   class Groups < Array
     def add(name, options)
-      i = size
-      i = find_index { |el| el.first == options[:after] } + 1 if options[:after]
+      i = index_for(options)
 
       self.insert(i, [name, group = Group.new, options])
       group
+    end
+
+    def index_for(options)
+      return find_index { |el| el.first == options[:after] } + 1 if options[:after]
+      size # default index: append.
     end
   end
 
