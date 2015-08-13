@@ -1,3 +1,7 @@
+## 2.1.0
+
+* You now have to add `gem reform-rails` in order to automatically load and include Rails support.
+
 ## 2.0.4
 
 * `#sync` and `#save` with block now provide `HashWithIndifferentAccess` in Rails.
