@@ -2,11 +2,32 @@ require "lotus/validations"
 
 # Implements ::validates and friends, and #valid?.
 module Reform::Form::Lotus
-  class Errors < Lotus::Validations::Errors
+  class Errors #< Lotus::Validations::Errors
+    def initialize(*args)
+      @lotus_errors = Lotus::Validations::Errors.new(*args)
+    end
+
+    def clear
+      @lotus_errors.clear
+    end
+
+    def add(*args)
+      @lotus_errors.add(*args)
+    end
+    def empty?(*args)
+      @lotus_errors.empty?(*args)
+    end
+
     def merge!(errors, prefix)
-      errors.instance_variable_get(:@errors).each do |name, err|
+      errs = []
+
+      @lotus_errors.instance_variable_get(:@errors).each do |name, err|
         field = (prefix+[name]).join(".")
-        add(field, *err) # TODO: use namespace feature in Lotus here!
+        errs << [field, *err]
+      end
+
+      errs.each do |err|
+        @lotus_errors.add(*err) # TODO: use namespace feature in Lotus here!
       end
       #   next if messages[field] and messages[field].include?(msg)
     end
@@ -16,7 +37,12 @@ module Reform::Form::Lotus
     end
 
     def messages
-      self
+      @lotus_errors
+    end
+
+    def [](name)
+      # puts "@@@ #{name  },#{object_id}@@ #{@errors[name].inspect}"
+      @lotus_errors.instance_variable_get(:@errors)[name] || []
     end
   end
 
