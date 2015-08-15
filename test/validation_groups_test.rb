@@ -104,9 +104,73 @@ class ValidationGroupsTest < MiniTest::Spec
 
     # partially invalid.
     # 2nd group fails.
-    it "bl" do
+    it do
       form.validate(password: 9).must_equal false
       form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\"], :email=>[\"email can't be blank\"]}"
+    end
+  end
+
+
+  describe "overwriting a group" do
+    class OverwritingForm < Reform::Form
+      include Reform::Form::Lotus
+      include Validation
+
+      property :username
+      property :email
+
+      validation :email do
+        validates :email, presence: true # is not considered, but overwritten.
+      end
+
+      validation :email do # overwrites the above.
+        validates :username, presence: true
+      end
+    end
+
+    let (:form) { OverwritingForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: "Helloween"}).must_equal true
+    end
+
+    # invalid.
+    it do
+      form.validate({}).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\"]}"
+    end
+  end
+
+
+  describe "inherit: true in same group" do
+    class InheritSameGroupForm < Reform::Form
+      include Reform::Form::Lotus
+      include Validation
+
+      property :username
+      property :email
+
+      validation :email do
+        validates :email, presence: true
+      end
+
+      validation :email, inherit: true do # extends the above.
+        validates :username, presence: true
+      end
+    end
+
+    let (:form) { InheritSameGroupForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: "Helloween", email: 9}).must_equal true
+    end
+
+    # invalid.
+    it do
+      form.validate({}).must_equal false
+      form.errors.messages.inspect.must_equal "{:email=>[\"email can't be blank\"], :username=>[\"username can't be blank\"]}"
     end
   end
 end

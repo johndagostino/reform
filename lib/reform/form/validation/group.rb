@@ -1,5 +1,6 @@
 module Reform::Form::Validation
   # DSL object wrapping the ValidationSet.
+  # Translates the "Reform" DSL to the target validator gem's language.
   class Group
     def initialize
       @validations = Lotus::Validations::ValidationSet.new
@@ -40,11 +41,7 @@ module Reform::Form::Validation
 
   module ClassMethods
     def validation(name, options={}, &block)
-      # if options[:inherit]
-
-      # else
-        group = validation_groups.add(name, options)
-      # end
+      group = validation_groups.add(name, options)
 
       group.instance_exec(&block)
     end
@@ -77,17 +74,16 @@ module Reform::Form::Validation
 
       # validator = validator_for(group.validations)
 
-      validator = Lotus::Validations::Validator.new(group.validations,
-        @fields, errors)
+      validator = Lotus::Validations::Validator.new(group.validations, @fields, errors)
 
-      puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
+      # puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
       depends_on = options[:if]
       if depends_on.nil? or results[depends_on].empty?
         results[name] = validator.validate
       end
 
-      result &= _errors.empty?
+      result &= errors.empty?
     end
 
     result
