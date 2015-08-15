@@ -40,7 +40,7 @@ class ValidationGroupsTest < MiniTest::Spec
   # valid.
   it do
     form.validate({username: "Helloween", email: "yep", password: "9"}).must_equal true
-    form.errors.messages.inspect.must_equal "[]"
+    form.errors.messages.inspect.must_equal "{}"
   end
 
   # invalid.
@@ -81,10 +81,10 @@ class ValidationGroupsTest < MiniTest::Spec
 
       validates :username, presence: true
       validates :email, presence: true
+      validates :password, presence: true
 
-      validation :email, if: :default do
-        # validate :email_ok? # FIXME: implement that.
-        validates :email, size: 3
+      validation :after_default, if: :default do
+        validates :confirm_password, presence: true
       end
     end
 
@@ -92,21 +92,21 @@ class ValidationGroupsTest < MiniTest::Spec
 
     # valid.
     it do
-      form.validate({username: "Helloween", email: "yep", password: "9"}).must_equal true
-      form.errors.messages.inspect.must_equal "[]"
+      form.validate({username: "Helloween", email: "yep", password: "9", confirm_password: 9}).must_equal true
+      form.errors.messages.inspect.must_equal "{}"
     end
 
     # invalid.
     it do
-      form.validate({}).must_equal false
+      form.validate({password: 9}).must_equal false
       form.errors.messages.inspect.must_equal %{["username", "email"]}
     end
 
     # partially invalid.
     # 2nd group fails.
-    it do
-      form.validate(username: "Helloween", email: "yo").must_equal false
-      form.errors.messages.inspect.must_equal %{["email"]}
+    it "bl" do
+      form.validate(password: 9).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\"], :email=>[\"email can't be blank\"]}"
     end
   end
 end

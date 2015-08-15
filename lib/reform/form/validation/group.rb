@@ -13,8 +13,13 @@ module Reform::Form::Validation
   end
 
   # Set of Validation::Group objects.
+  # This implements adding, iterating, and finding groups, including "inheritance" and insertions.
   class Groups < Array
     def add(name, options)
+      if options[:inherit]
+        return self[name] if self[name]
+      end
+
       i = index_for(options)
 
       self.insert(i, [name, group = Group.new, options])
@@ -50,17 +55,13 @@ module Reform::Form::Validation
 
 
     def validates(name, options)
-      validation(:default) { validates name, options }
+      validation(:default, inherit: true) { validates name, options }
     end
 
     def validate(name, *)
       # DISCUSS: lotus does not support that?
       # validations.add(name, options)
     end
-
-    # def default_group
-    #   validation_groups[:default] || validation_groups.add(:default, {})
-    # end
   end
 
   def self.included(includer)
@@ -69,10 +70,7 @@ module Reform::Form::Validation
 
   def valid?
     result = true
-    @errors ||= Reform::Form::Lotus::Errors.new
     results = {}
-
-    _errors = Reform::Form::Lotus::Errors.new
 
     self.class.validation_groups.each do |cfg|
       name, group, options = cfg
@@ -80,7 +78,7 @@ module Reform::Form::Validation
       # validator = validator_for(group.validations)
 
       validator = Lotus::Validations::Validator.new(group.validations,
-        @fields, _errors)
+        @fields, errors)
 
       puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
@@ -88,8 +86,6 @@ module Reform::Form::Validation
       if depends_on.nil? or results[depends_on].empty?
         results[name] = validator.validate
       end
-
-      @errors.merge! _errors, [] # FIXME: merge with result set.
 
       result &= _errors.empty?
     end
