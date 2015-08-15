@@ -19,7 +19,10 @@ module Reform::Form::Lotus
       errs = []
 
       errors.each do |name, err|
-        field = (prefix+[name]).join(".")
+        field = (prefix+[name]).join(".").to_sym
+
+        next if @lotus_errors.for(field).any?
+
         errs << [field, *err]
       end
 

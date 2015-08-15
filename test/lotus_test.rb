@@ -159,6 +159,8 @@ class LotusValidationsTest < MiniTest::Spec
       result.must_equal false
 
       form.errors[:title].map(&:to_s).must_equal ["title can't be blank"]
+
+      form.errors.messages.must_equal({:title=>["title can't be blank"], :"hit.title"=>["title can't be blank"], :"songs.title"=>["title can't be blank"], :"band.label.name"=>["name can't be blank"]})
     end
   end
 end
