@@ -10,19 +10,19 @@ class LotusValidationsTest < MiniTest::Spec
 
     property :hit do
       property :title
-      validates :title, :presence => true
+      validates :title, presence: true
     end
 
     collection :songs do
       property :title
-      validates :title, :presence => true
+      validates :title, presence: true
     end
 
     property :band do # yepp, people do crazy stuff like that.
       property :name
       property :label do
         property :name
-        validates :name, :presence => true
+        validates :name, presence: true
       end
       # TODO: make band a required object.
 
@@ -33,7 +33,7 @@ class LotusValidationsTest < MiniTest::Spec
       end
     end
 
-    validates :title, :presence => true
+    validates :title, presence: true
   end
 
   let (:album) do
@@ -60,7 +60,7 @@ class LotusValidationsTest < MiniTest::Spec
     )
 
     result.must_equal true
-    form.errors.inspect.must_equal "{}"
+    form.errors.empty?.must_equal true
   end
 
 
