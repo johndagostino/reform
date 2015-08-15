@@ -50,7 +50,7 @@ module Reform::Form::Validation
 
 
     def validates(name, options)
-      default_group.validates(name, options)
+      validation(:default) { validates name, options }
     end
 
     def validate(name, *)
@@ -58,9 +58,9 @@ module Reform::Form::Validation
       # validations.add(name, options)
     end
 
-    def default_group
-      validation_groups[:default] || validation_groups.add(:default, {})
-    end
+    # def default_group
+    #   validation_groups[:default] || validation_groups.add(:default, {})
+    # end
   end
 
   def self.included(includer)
