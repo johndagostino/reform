@@ -10,6 +10,9 @@ module Reform::Form::Lotus
     def clear
       @lotus_errors.clear
     end
+    def each(&block)
+      @lotus_errors.each(&block)
+    end
 
     def add(*args)
       @lotus_errors.add(*args)
@@ -21,28 +24,37 @@ module Reform::Form::Lotus
     def merge!(errors, prefix)
       errs = []
 
-      @lotus_errors.instance_variable_get(:@errors).each do |name, err|
+      errors.instance_variable_get(:@lotus_errors).instance_variable_get(:@errors).each do |name, err|
+        # name = err.attribute
+
         field = (prefix+[name]).join(".")
         errs << [field, *err]
       end
 
       errs.each do |err|
-        @lotus_errors.add(*err) # TODO: use namespace feature in Lotus here!
+        @lotus_errors.add(err.first, err.last) # TODO: use namespace feature in Lotus here!
       end
       #   next if messages[field] and messages[field].include?(msg)
     end
 
-    def inspect
-      @errors.to_s
-    end
+    # def inspect
+    #   @errors.to_s
+    # end
 
     def messages
-      @lotus_errors
+
+      errors = {}
+      @lotus_errors.instance_variable_get(:@errors).each do |name, err|
+        errors[name] ||= []
+        errors[name] += err.map(&:to_s)
+      end
+      errors
     end
 
+    # needed in simple_form, etc.
+    # FIXME: test!
     def [](name)
-      # puts "@@@ #{name  },#{object_id}@@ #{@errors[name].inspect}"
-      @lotus_errors.instance_variable_get(:@errors)[name] || []
+      @lotus_errors.for(name)
     end
   end
 
@@ -72,11 +84,12 @@ module Reform::Form::Lotus
     Errors.new
   end
 
-  private
+private
 
   def valid?
     # DISCUSS: by using @fields here, we avoid setters being called. win!
     validator = Lotus::Validations::Validator.new(self.class.validations, @fields, errors)
     validator.validate
+    # TODO: shouldn't we return true/false here?
   end
 end
