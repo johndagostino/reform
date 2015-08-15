@@ -16,25 +16,14 @@ module Reform::Form::Lotus
     end
 
     def merge!(errors, prefix)
-      errs = []
-
       errors.each do |name, err|
         field = (prefix+[name]).join(".").to_sym
 
         next if @lotus_errors.for(field).any?
 
-        errs << [field, *err]
+        @lotus_errors.add(field, *err) # TODO: use namespace feature in Lotus here!
       end
-
-      errs.each do |err|
-        @lotus_errors.add(err.first, err.last) # TODO: use namespace feature in Lotus here!
-      end
-      #   next if messages[field] and messages[field].include?(msg)
     end
-
-    # def inspect
-    #   @errors.to_s
-    # end
 
     def messages
       errors = {}
