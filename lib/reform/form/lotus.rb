@@ -2,31 +2,23 @@ require "lotus/validations"
 
 # Implements ::validates and friends, and #valid?.
 module Reform::Form::Lotus
-  class Errors #< Lotus::Validations::Errors
+  class Errors
+    extend Uber::Delegates
+
     def initialize(*args)
       @lotus_errors = Lotus::Validations::Errors.new(*args)
     end
 
-    def clear
-      @lotus_errors.clear
-    end
-    def each(&block)
-      @lotus_errors.each(&block)
-    end
+    delegates :@lotus_errors, :clear, :add, :empty?
 
-    def add(*args)
-      @lotus_errors.add(*args)
-    end
-    def empty?(*args)
-      @lotus_errors.empty?(*args)
+    def each(&block)
+      @lotus_errors.instance_variable_get(:@errors).each(&block)
     end
 
     def merge!(errors, prefix)
       errs = []
 
-      errors.instance_variable_get(:@lotus_errors).instance_variable_get(:@errors).each do |name, err|
-        # name = err.attribute
-
+      errors.each do |name, err|
         field = (prefix+[name]).join(".")
         errs << [field, *err]
       end
@@ -42,7 +34,6 @@ module Reform::Form::Lotus
     # end
 
     def messages
-
       errors = {}
       @lotus_errors.instance_variable_get(:@errors).each do |name, err|
         errors[name] ||= []
@@ -52,7 +43,6 @@ module Reform::Form::Lotus
     end
 
     # needed in simple_form, etc.
-    # FIXME: test!
     def [](name)
       @lotus_errors.for(name)
     end
@@ -60,7 +50,6 @@ module Reform::Form::Lotus
 
 
   def self.included(base)
-    # base.send(:include, Lotus::Validations)
     base.extend(ClassMethods)
   end
 

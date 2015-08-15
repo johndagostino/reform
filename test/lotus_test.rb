@@ -147,4 +147,18 @@ class LotusValidationsTest < MiniTest::Spec
     it { form.title.must_equal "Second Heat" }
     it { form.songs.first.title.must_equal "Heart Of A Lion" }
   end
+
+
+  describe "Form::Lotus::Errors" do
+    it do
+      result = form.validate(
+      "hit"   =>{"title" => ""},
+      "title" => "",
+      "songs" => [{"title" => ""}, {"title" => ""}])
+
+      result.must_equal false
+
+      form.errors[:title].map(&:to_s).must_equal ["title can't be blank"]
+    end
+  end
 end
