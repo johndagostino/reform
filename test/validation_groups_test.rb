@@ -65,4 +65,48 @@ class ValidationGroupsTest < MiniTest::Spec
     form.validate(username: "Helloween", email: "yo!", password: "", confirm_password: "9").must_equal false
     form.errors.messages.inspect.must_equal %{["confirm_password"]}
   end
+
+
+  describe "implicit :default group" do
+    # implicit :default group.
+    class LoginForm < Reform::Form
+      include Reform::Form::Lotus
+
+      include Validation
+
+      property :username
+      property :email
+      property :password
+      property :confirm_password
+
+      validates :username, presence: true
+      validates :email, presence: true
+
+      validation :email, if: :default do
+        # validate :email_ok? # FIXME: implement that.
+        validates :email, size: 3
+      end
+    end
+
+    let (:form) { LoginForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: "Helloween", email: "yep", password: "9"}).must_equal true
+      form.errors.messages.inspect.must_equal "[]"
+    end
+
+    # invalid.
+    it do
+      form.validate({}).must_equal false
+      form.errors.messages.inspect.must_equal %{["username", "email"]}
+    end
+
+    # partially invalid.
+    # 2nd group fails.
+    it do
+      form.validate(username: "Helloween", email: "yo").must_equal false
+      form.errors.messages.inspect.must_equal %{["email"]}
+    end
+  end
 end

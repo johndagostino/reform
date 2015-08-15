@@ -25,22 +25,32 @@ module Reform::Form::Validation
       return find_index { |el| el.first == options[:after] } + 1 if options[:after]
       size # default index: append.
     end
+
+    def [](name)
+      cfg = find { |cfg| cfg.first == name }
+      return unless cfg
+      cfg[1]
+    end
   end
 
   module ClassMethods
     def validation(name, options={}, &block)
-      @groups ||= Groups.new # TODO: inheritable_attr with Inheritable::Hash
-      group = @groups.add(name, options)
+      # if options[:inherit]
+
+      # else
+        group = validation_groups.add(name, options)
+      # end
+
       group.instance_exec(&block)
     end
 
     def validation_groups
-      @groups
+      @groups ||= Groups.new # TODO: inheritable_attr with Inheritable::Hash
     end
 
 
     def validates(name, options)
-      validations.add(name, options)
+      default_group.validates(name, options)
     end
 
     def validate(name, *)
@@ -48,8 +58,8 @@ module Reform::Form::Validation
       # validations.add(name, options)
     end
 
-    def validations
-      @validations ||= Lotus::Validations::ValidationSet.new
+    def default_group
+      validation_groups[:default] || validation_groups.add(:default, {})
     end
   end
 
