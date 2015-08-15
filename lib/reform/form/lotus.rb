@@ -1,4 +1,5 @@
 require "lotus/validations"
+require "reform/form/validation/group"
 
 # Implements ::validates and friends, and #valid?.
 module Reform::Form::Lotus
@@ -69,8 +70,12 @@ private
 
   def valid?
     # DISCUSS: by using @fields here, we avoid setters being called. win!
-    validator = Lotus::Validations::Validator.new(self.class.validations, @fields, errors)
+    validator = validator_for
     validator.validate
     # TODO: shouldn't we return true/false here?
+  end
+
+  def validator_for(validations=self.class.validations)
+    Lotus::Validations::Validator.new(validations, @fields, errors)
   end
 end
