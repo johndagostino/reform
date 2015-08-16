@@ -13,8 +13,15 @@ module Reform::Form::Validation
       end
 
       def call(fields, errors, form) # FIXME.
-        validator = ::Lotus::Validations::Validator.new(@validations, fields, errors)
+        private_errors = Reform::Form::Lotus::Errors.new # FIXME: damn, Lotus::Validator.validate does errors.clear.
+
+        validator = ::Lotus::Validations::Validator.new(@validations, fields, private_errors)
         validator.validate
+
+        # TODO: merge with AM.
+        private_errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
+          errors.add(name, *error)
+        end
       end
     end
 
@@ -114,8 +121,11 @@ module Reform::Form::Validation
       # puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
       depends_on = options[:if]
-      if depends_on.nil? or results[depends_on].empty?
-        results[name] = group.(@fields, errors, self) # validate.
+      puts "@@@@@ #{name}:: #{depends_on.inspect}"
+      puts " xx #{results.inspect}"
+      if depends_on.nil? or results[depends_on]
+        puts "-> #{name} exec"
+        results[name] = group.(@fields, errors, self).empty? # validate.
       end
 
       result &= errors.empty?
