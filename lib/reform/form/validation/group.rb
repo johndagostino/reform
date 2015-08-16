@@ -10,7 +10,11 @@ module Reform::Form::Validation
       @validations.add(*args)
     end
 
-    attr_reader :validations
+
+    def call(fields, errors)
+      validator = Lotus::Validations::Validator.new(@validations, fields, errors)
+      validator.validate
+    end
   end
 
   # Set of Validation::Group objects.
@@ -74,13 +78,11 @@ module Reform::Form::Validation
 
       # validator = validator_for(group.validations)
 
-      validator = Lotus::Validations::Validator.new(group.validations, @fields, errors)
-
       # puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
       depends_on = options[:if]
       if depends_on.nil? or results[depends_on].empty?
-        results[name] = validator.validate
+        results[name] = group.(@fields, errors)
       end
 
       result &= errors.empty?
