@@ -1,15 +1,16 @@
 require "test_helper"
 require "reform/form/lotus"
 
-class ValidationGroupsTest < MiniTest::Spec
+class ActiveModelValidationTest < MiniTest::Spec
   Session = Struct.new(:username, :email, :password, :confirm_password)
   Album = Struct.new(:name, :songs, :artist)
   Artist = Struct.new(:name)
 
   class SessionForm < Reform::Form
-    include Reform::Form::Lotus
+    include Reform::Form::ActiveModel::Validations
 
     include Validation
+    extend Validation::ActiveModel
 
     property :username
     property :email
@@ -23,15 +24,15 @@ class ValidationGroupsTest < MiniTest::Spec
 
     validation :email, if: :default do
       # validate :email_ok? # FIXME: implement that.
-      validates :email, size: 3
+      validates :email, length: {is: 3}
     end
 
     validation :nested, if: :default do
-      validates :password, presence: true, size: 1
+      validates :password, presence: true, length: {is: 1}
     end
 
     validation :confirm, if: :default, after: :email do
-      validates :confirm_password, size: 2
+      validates :confirm_password, length: {is: 2}
     end
   end
 
@@ -70,9 +71,10 @@ class ValidationGroupsTest < MiniTest::Spec
   describe "implicit :default group" do
     # implicit :default group.
     class LoginForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::ActiveModel::Validations
 
       include Validation
+      extend Validation::ActiveModel
 
       property :username
       property :email
@@ -113,8 +115,9 @@ class ValidationGroupsTest < MiniTest::Spec
 
   describe "overwriting a group" do
     class OverwritingForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::ActiveModel::Validations
       include Validation
+      extend Validation::ActiveModel
 
       property :username
       property :email
@@ -145,8 +148,9 @@ class ValidationGroupsTest < MiniTest::Spec
 
   describe "inherit: true in same group" do
     class InheritSameGroupForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::ActiveModel::Validations
       include Validation
+      extend Validation::ActiveModel
 
       property :username
       property :email

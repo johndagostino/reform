@@ -1,25 +1,61 @@
 module Reform::Form::Validation
   # DSL object wrapping the ValidationSet.
   # Translates the "Reform" DSL to the target validator gem's language.
-  class Group
-    def initialize
-      @validations = Lotus::Validations::ValidationSet.new
+  # TODO: rename so everything is in Reform::Lotus ns
+  module Lotus
+    class Group
+      def initialize
+        @validations = ::Lotus::Validations::ValidationSet.new
+      end
+
+      def validates(*args)
+        @validations.add(*args)
+      end
+
+      def call(fields, errors, form) # FIXME.
+        validator = ::Lotus::Validations::Validator.new(@validations, fields, errors)
+        validator.validate
+      end
     end
 
-    def validates(*args)
-      @validations.add(*args)
-    end
-
-
-    def call(fields, errors)
-      validator = Lotus::Validations::Validator.new(@validations, fields, errors)
-      validator.validate
+    def validation_group_class
+      Group
     end
   end
+
+  module ActiveModel
+    class Group
+      def initialize
+        @validations = Class.new(Reform::Form::ActiveModel::Validations::Validator)
+      end
+
+      def validates(*args)
+        @validations.validates(*args)
+      end
+
+      def call(fields, errors, form) # FIXME.
+        validator = @validations.new(form, form.model_name)
+        validator.valid?
+
+        validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
+          errors.add(name, error)
+        end
+      end
+    end
+
+    def validation_group_class
+      Group
+    end
+  end
+
 
   # Set of Validation::Group objects.
   # This implements adding, iterating, and finding groups, including "inheritance" and insertions.
   class Groups < Array
+    def initialize(group_class)
+      @group_class = group_class
+    end
+
     def add(name, options)
       if options[:inherit]
         return self[name] if self[name]
@@ -27,7 +63,7 @@ module Reform::Form::Validation
 
       i = index_for(options)
 
-      self.insert(i, [name, group = Group.new, options])
+      self.insert(i, [name, group = @group_class.new, options]) # Group.new
       group
     end
 
@@ -51,9 +87,8 @@ module Reform::Form::Validation
     end
 
     def validation_groups
-      @groups ||= Groups.new # TODO: inheritable_attr with Inheritable::Hash
+      @groups ||= Groups.new(validation_group_class) # TODO: inheritable_attr with Inheritable::Hash
     end
-
 
     def validates(name, options)
       validation(:default, inherit: true) { validates name, options }
@@ -73,16 +108,14 @@ module Reform::Form::Validation
     result = true
     results = {}
 
+    # DISCUSS: we could move that to Groups.
     self.class.validation_groups.each do |cfg|
       name, group, options = cfg
-
-      # validator = validator_for(group.validations)
-
       # puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
 
       depends_on = options[:if]
       if depends_on.nil? or results[depends_on].empty?
-        results[name] = group.(@fields, errors)
+        results[name] = group.(@fields, errors, self) # validate.
       end
 
       result &= errors.empty?
