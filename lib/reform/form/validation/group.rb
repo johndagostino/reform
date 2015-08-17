@@ -2,6 +2,9 @@ module Reform::Form::Validation
   # DSL object wrapping the ValidationSet.
   # Translates the "Reform" DSL to the target validator gem's language.
   # TODO: rename so everything is in Reform::Lotus ns
+
+  # A Group is a set of native validations, targeting a validation backend (AM, Lotus, Veto).
+  # The #call method will run those validations on the provided objects.
   module Lotus
     class Group
       def initialize
@@ -122,23 +125,23 @@ module Reform::Form::Validation
   end
 
   module ClassMethods
+    def validation_groups
+      @groups ||= Groups.new(validation_group_class) # TODO: inheritable_attr with Inheritable::Hash
+    end
+
+    # DSL.
     def validation(name, options={}, &block)
       group = validation_groups.add(name, options)
 
       group.instance_exec(&block)
     end
 
-    def validation_groups
-      @groups ||= Groups.new(validation_group_class) # TODO: inheritable_attr with Inheritable::Hash
-    end
-
     def validates(name, options)
       validation(:default, inherit: true) { validates name, options }
     end
 
-    def validate(name, *)
-      # DISCUSS: lotus does not support that?
-      # validations.add(name, options)
+    def validate(name, *args, &block)
+      validation(:default, inherit: true) { validate name, *args, &block }
     end
   end
 

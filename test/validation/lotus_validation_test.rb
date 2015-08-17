@@ -187,9 +187,9 @@ class ValidationGroupsTest < MiniTest::Spec
 
   describe "if: with lambda" do
     class IfWithLambdaForm < Reform::Form
-      include Reform::Form::ActiveModel::Validations
+      include Reform::Form::Lotus
       include Validation
-      extend Validation::ActiveModel
+      extend Validation::Lotus
 
       property :username
       property :email
@@ -220,7 +220,7 @@ class ValidationGroupsTest < MiniTest::Spec
     # invalid.
     it do
       form.validate({email: 9}).must_equal false
-      form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
+      form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\"]}"
     end
   end
 end
