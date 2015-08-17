@@ -3,6 +3,44 @@ require "reform/form/validation/group"
 
 # Implements ::validates and friends, and #valid?.
 module Reform::Form::Lotus
+  module Validations
+    def build_errors
+      Errors.new
+    end
+
+    module ClassMethods
+      def validation_group_class
+        Group
+      end
+    end
+
+    def self.included(includer)
+      includer.extend(ClassMethods)
+    end
+
+    class Group
+      def initialize
+        @validations = ::Lotus::Validations::ValidationSet.new
+      end
+
+      def validates(*args)
+        @validations.add(*args)
+      end
+
+      def call(fields, errors, form) # FIXME.
+        private_errors = Reform::Form::Lotus::Errors.new # FIXME: damn, Lotus::Validator.validate does errors.clear.
+
+        validator = ::Lotus::Validations::Validator.new(@validations, fields, private_errors)
+        validator.validate
+
+        # TODO: merge with AM.
+        private_errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
+          errors.add(name, *error)
+        end
+      end
+    end
+  end
+
   class Errors
     extend Uber::Delegates
 
@@ -39,43 +77,5 @@ module Reform::Form::Lotus
     def [](name)
       @lotus_errors.for(name)
     end
-  end
-
-
-  def self.included(base)
-    base.extend(ClassMethods)
-  end
-
-
-  module ClassMethods
-    def validates(name, options)
-      validations.add(name, options)
-    end
-
-    def validate(name, *)
-      # DISCUSS: lotus does not support that?
-      # validations.add(name, options)
-    end
-
-    def validations
-      @validations ||= Lotus::Validations::ValidationSet.new
-    end
-  end
-
-  def build_errors
-    Errors.new
-  end
-
-private
-
-  def valid?
-    # DISCUSS: by using @fields here, we avoid setters being called. win!
-    validator = validator_for
-    validator.validate
-    # TODO: shouldn't we return true/false here?
-  end
-
-  def validator_for(validations=self.class.validations)
-    Lotus::Validations::Validator.new(validations, @fields, errors)
   end
 end

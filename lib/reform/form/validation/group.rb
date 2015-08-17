@@ -4,58 +4,12 @@ module Reform::Form::Validation
   # TODO: rename so everything is in Reform::Lotus ns
 
   # A Group is a set of native validations, targeting a validation backend (AM, Lotus, Veto).
+  # Group receives configuration via #validates and #validate and translates that to its
+  # internal backend.
+  #
   # The #call method will run those validations on the provided objects.
   module Lotus
-    class Group
-      def initialize
-        @validations = ::Lotus::Validations::ValidationSet.new
-      end
 
-      def validates(*args)
-        @validations.add(*args)
-      end
-
-      def call(fields, errors, form) # FIXME.
-        private_errors = Reform::Form::Lotus::Errors.new # FIXME: damn, Lotus::Validator.validate does errors.clear.
-
-        validator = ::Lotus::Validations::Validator.new(@validations, fields, private_errors)
-        validator.validate
-
-        # TODO: merge with AM.
-        private_errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
-          errors.add(name, *error)
-        end
-      end
-    end
-
-    def validation_group_class
-      Group
-    end
-  end
-
-  module ActiveModel
-    class Group
-      def initialize
-        @validations = Class.new(Reform::Form::ActiveModel::Validations::Validator)
-      end
-
-      def validates(*args)
-        @validations.validates(*args)
-      end
-
-      def call(fields, errors, form) # FIXME.
-        validator = @validations.new(form, form.model_name)
-        validator.valid?
-
-        validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
-          errors.add(name, error)
-        end
-      end
-    end
-
-    def validation_group_class
-      Group
-    end
   end
 
 

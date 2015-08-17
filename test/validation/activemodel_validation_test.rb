@@ -10,7 +10,6 @@ class ActiveModelValidationTest < MiniTest::Spec
     include Reform::Form::ActiveModel::Validations
 
     include Validation
-    extend Validation::ActiveModel
 
     property :username
     property :email
@@ -74,7 +73,6 @@ class ActiveModelValidationTest < MiniTest::Spec
       include Reform::Form::ActiveModel::Validations
 
       include Validation
-      extend Validation::ActiveModel
 
       property :username
       property :email
@@ -117,7 +115,6 @@ class ActiveModelValidationTest < MiniTest::Spec
   #   class OverwritingForm < Reform::Form
   #     include Reform::Form::ActiveModel::Validations
   #     include Validation
-  #     extend Validation::ActiveModel
 
   #     property :username
   #     property :email
@@ -150,7 +147,6 @@ class ActiveModelValidationTest < MiniTest::Spec
     class InheritSameGroupForm < Reform::Form
       include Reform::Form::ActiveModel::Validations
       include Validation
-      extend Validation::ActiveModel
 
       property :username
       property :email
@@ -183,7 +179,6 @@ class ActiveModelValidationTest < MiniTest::Spec
     class IfWithLambdaForm < Reform::Form
       include Reform::Form::ActiveModel::Validations
       include Validation
-      extend Validation::ActiveModel
 
       property :username
       property :email

@@ -14,6 +14,7 @@ module Reform::Form::ActiveModel
   module Validations
     def self.included(includer)
       includer.instance_eval do
+        extend ClassMethods
         include Reform::Form::ActiveModel
         extend Uber::InheritableAttr
         inheritable_attr :validator
@@ -33,10 +34,37 @@ module Reform::Form::ActiveModel
       Reform::Contract::Errors.new(self)
     end
 
+    module ClassMethods
+      def validation_group_class
+        Group
+      end
+    end
+
+
     # The concept of "composition" has still not arrived in Rails core and they rely on 400 methods being
     # available in one object. This is why we need to provide parts of the I18N API in the form.
     def read_attribute_for_validation(name)
       send(name)
+    end
+
+
+    class Group
+      def initialize
+        @validations = Class.new(Reform::Form::ActiveModel::Validations::Validator)
+      end
+
+      def validates(*args)
+        @validations.validates(*args)
+      end
+
+      def call(fields, errors, form) # FIXME.
+        validator = @validations.new(form, form.model_name)
+        validator.valid?
+
+        validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
+          errors.add(name, error)
+        end
+      end
     end
 
 
@@ -71,6 +99,8 @@ module Reform::Form::ActiveModel
     end
 
     private
+
+    # TODO: remove this:
 
     # Needs to be implemented by every validation backend and implements the
     # actual validation. See Reform::Form::Lotus, too!

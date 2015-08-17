@@ -7,10 +7,9 @@ class ValidationGroupsTest < MiniTest::Spec
   Artist = Struct.new(:name)
 
   class SessionForm < Reform::Form
-    include Reform::Form::Lotus
+    include Reform::Form::Lotus::Validations
 
     include Validation
-    extend Validation::Lotus
 
     property :username
     property :email
@@ -75,10 +74,9 @@ class ValidationGroupsTest < MiniTest::Spec
   describe "implicit :default group" do
     # implicit :default group.
     class LoginForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::Lotus::Validations
 
       include Validation
-      extend Validation::Lotus
 
       property :username
       property :email
@@ -119,9 +117,8 @@ class ValidationGroupsTest < MiniTest::Spec
 
   # describe "same-named group" do
   #   class OverwritingForm < Reform::Form
-  #     include Reform::Form::Lotus
+  #     include Reform::Form::Lotus::Validations
   #     include Validation
-  #     extend Validation::Lotus
 
   #     property :username
   #     property :email
@@ -154,9 +151,8 @@ class ValidationGroupsTest < MiniTest::Spec
 
   describe "inherit: true in same group" do
     class InheritSameGroupForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::Lotus::Validations
       include Validation
-      extend Validation::Lotus
 
       property :username
       property :email
@@ -187,9 +183,8 @@ class ValidationGroupsTest < MiniTest::Spec
 
   describe "if: with lambda" do
     class IfWithLambdaForm < Reform::Form
-      include Reform::Form::Lotus
+      include Reform::Form::Lotus::Validations # ::build_errors.
       include Validation
-      extend Validation::Lotus
 
       property :username
       property :email
