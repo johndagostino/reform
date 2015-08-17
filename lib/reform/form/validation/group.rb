@@ -118,13 +118,9 @@ module Reform::Form::Validation
     # DISCUSS: we could move that to Groups.
     self.class.validation_groups.each do |cfg|
       name, group, options = cfg
-      # puts "@@@@@ #{name.inspect}, #{_errors.inspect}"
-
       depends_on = options[:if]
-      puts "@@@@@ #{name}:: #{depends_on.inspect}"
-      puts " xx #{results.inspect}"
-      if depends_on.nil? or results[depends_on]
-        puts "-> #{name} exec"
+
+      if evaluate_if(depends_on, results)
         results[name] = group.(@fields, errors, self).empty? # validate.
       end
 
@@ -132,5 +128,11 @@ module Reform::Form::Validation
     end
 
     result
+  end
+
+  def evaluate_if(depends_on, results)
+    return true if depends_on.nil?
+    return results[depends_on] if depends_on.is_a?(Symbol)
+    instance_exec(results, &depends_on)
   end
 end
