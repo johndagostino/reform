@@ -183,4 +183,44 @@ class ValidationGroupsTest < MiniTest::Spec
       form.errors.messages.inspect.must_equal "{:email=>[\"email can't be blank\"], :username=>[\"username can't be blank\"]}"
     end
   end
+
+
+  describe "if: with lambda" do
+    class IfWithLambdaForm < Reform::Form
+      include Reform::Form::ActiveModel::Validations
+      include Validation
+      extend Validation::ActiveModel
+
+      property :username
+      property :email
+      property :password
+
+      validation :email do
+        validates :email, presence: true
+      end
+
+      # run this is :email group is true.
+      validation :after_email, if: lambda { |results| results[:email]==true } do # extends the above.
+        validates :username, presence: true
+      end
+
+      # block gets evaled in form instance context.
+      validation :password, if: lambda { |results| email == "john@trb.org" } do
+        validates :password, presence: true
+      end
+    end
+
+    let (:form) { IfWithLambdaForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: "Strung Out", email: 9}).must_equal true
+    end
+
+    # invalid.
+    it do
+      form.validate({email: 9}).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
+    end
+  end
 end
