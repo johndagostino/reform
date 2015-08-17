@@ -8,10 +8,6 @@ module Reform::Form::Validation
   # internal backend.
   #
   # The #call method will run those validations on the provided objects.
-  module Lotus
-
-  end
-
 
   # Set of Validation::Group objects.
   # This implements adding, iterating, and finding groups, including "inheritance" and insertions.

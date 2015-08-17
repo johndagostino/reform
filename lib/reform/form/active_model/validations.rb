@@ -9,6 +9,9 @@ module Reform::Form::ActiveModel
   # implementation is old, very complex given that it needs to do a simple thing, is using
   # globals like @errors, and relies and more than 100 methods to be mixed into your form.
   #
+  # What really sucks about AM:V, though, is how they infer the model_name. This always goes through
+  # the object _class_ and makes it super hard to work with.
+  #
   # Implements ::validates and friends, and #valid?.
   #
   module Validations
@@ -16,16 +19,16 @@ module Reform::Form::ActiveModel
       includer.instance_eval do
         extend ClassMethods
         include Reform::Form::ActiveModel
-        extend Uber::InheritableAttr
-        inheritable_attr :validator
-        self.validator = Class.new(Validator)
+        # extend Uber::InheritableAttr
+        # inheritable_attr :validator
+        # self.validator = Class.new(Validator)
 
         class << self
           extend Uber::Delegates
-          delegates :validator, :validates, :validate, :validates_with, :validate_with
+          # delegates :validator, :validates, :validate, :validates_with, :validate_with
 
           # Hooray! Delegate translation back to Reform's Validator class which contains AM::Validations.
-          delegates :validator, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
+          # delegates :validator, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
         end
       end
     end
@@ -58,7 +61,7 @@ module Reform::Form::ActiveModel
       end
 
       def call(fields, errors, form) # FIXME.
-        validator = @validations.new(form, form.model_name)
+        validator = @validations.new(form)
         validator.valid?
 
         validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
@@ -75,12 +78,17 @@ module Reform::Form::ActiveModel
       include ActiveModel::Validations
 
       class << self
-        def model_name
-          @_active_model_sucks || ActiveModel::Name.new(Reform::Form, nil, "Reform::Form")
+        extend Uber::Delegates
+
+        def form=(form)
+          puts "@@@@@ #{form.inspect} on #{self}"
+          @form = form
         end
 
-        def model_name=(name)
-          @_active_model_sucks = name
+        def model_name
+          puts "~~~ #{@form} on #{self}"
+          return Reform::Form.model_name unless @form # for some reasons, AM:V asks Validator.model_name sometimes.
+          @form.model_name
         end
 
         def clone
@@ -88,36 +96,14 @@ module Reform::Form::ActiveModel
         end
       end
 
-      def initialize(form, name)
+      def initialize(form)
         @form = form
-        self.class.model_name = name # one of the many reasons why i will drop support for AM::V in 2.1.
+        self.class.form = form # one of the many reasons why i will drop support for AM::V in 2.1.
       end
 
       def method_missing(method_name, *args, &block)
         @form.send(method_name, *args, &block)
       end
-    end
-
-    private
-
-    # TODO: remove this:
-
-    # Needs to be implemented by every validation backend and implements the
-    # actual validation. See Reform::Form::Lotus, too!
-    def valid?
-      # we always pass the model_name into the validator now, so AM:V can do its magic. problem is that
-      # AM does validator.class.model_name so we have to hack the dynamic model name into the
-      # Validator class.
-      validator = self.class.validator.new(self, model_name)
-      validator.valid? # run the Validations object's validator with the form as context. this won't pollute anything in the form.
-
-
-      #errors.merge!(validator.errors, "")
-      validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
-        errors.add(name, error)
-      end
-
-      errors.empty?
     end
   end
 end
