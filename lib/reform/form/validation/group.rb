@@ -74,6 +74,8 @@ module Reform::Form::Validation
       group
     end
 
+  private
+
     def index_for(options)
       return find_index { |el| el.first == options[:after] } + 1 if options[:after]
       size # default index: append.
@@ -83,6 +85,39 @@ module Reform::Form::Validation
       cfg = find { |cfg| cfg.first == name }
       return unless cfg
       cfg[1]
+    end
+
+
+    # Runs all validations groups according to their rules and returns result.
+    # Populates errors passed into #call.
+    class Result # DISCUSS: could be in Groups.
+      def initialize(groups)
+        @groups = groups
+      end
+
+      def call(fields, errors, form)
+        result = true
+        results = {}
+
+        @groups.each do |cfg|
+          name, group, options = cfg
+          depends_on = options[:if]
+
+          if evaluate_if(depends_on, results, form)
+            results[name] = group.(fields, errors, form).empty? # validate.
+          end
+
+          result &= errors.empty?
+        end
+
+        result
+      end
+
+      def evaluate_if(depends_on, results, form)
+        return true if depends_on.nil?
+        return results[depends_on] if depends_on.is_a?(Symbol)
+        form.instance_exec(results, &depends_on)
+      end
     end
   end
 
@@ -112,27 +147,6 @@ module Reform::Form::Validation
   end
 
   def valid?
-    result = true
-    results = {}
-
-    # DISCUSS: we could move that to Groups.
-    self.class.validation_groups.each do |cfg|
-      name, group, options = cfg
-      depends_on = options[:if]
-
-      if evaluate_if(depends_on, results)
-        results[name] = group.(@fields, errors, self).empty? # validate.
-      end
-
-      result &= errors.empty?
-    end
-
-    result
-  end
-
-  def evaluate_if(depends_on, results)
-    return true if depends_on.nil?
-    return results[depends_on] if depends_on.is_a?(Symbol)
-    instance_exec(results, &depends_on)
+    Groups::Result.new(self.class.validation_groups).(@fields, errors, self)
   end
 end
