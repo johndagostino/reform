@@ -9,8 +9,6 @@ class ValidationGroupsTest < MiniTest::Spec
   class SessionForm < Reform::Form
     include Reform::Form::Lotus::Validations
 
-    include Validation
-
     property :username
     property :email
     property :password
@@ -76,7 +74,6 @@ class ValidationGroupsTest < MiniTest::Spec
     class LoginForm < Reform::Form
       include Reform::Form::Lotus::Validations
 
-      include Validation
 
       property :username
       property :email
@@ -118,7 +115,6 @@ class ValidationGroupsTest < MiniTest::Spec
   # describe "same-named group" do
   #   class OverwritingForm < Reform::Form
   #     include Reform::Form::Lotus::Validations
-  #     include Validation
 
   #     property :username
   #     property :email
@@ -152,7 +148,6 @@ class ValidationGroupsTest < MiniTest::Spec
   describe "inherit: true in same group" do
     class InheritSameGroupForm < Reform::Form
       include Reform::Form::Lotus::Validations
-      include Validation
 
       property :username
       property :email
@@ -184,7 +179,6 @@ class ValidationGroupsTest < MiniTest::Spec
   describe "if: with lambda" do
     class IfWithLambdaForm < Reform::Form
       include Reform::Form::Lotus::Validations # ::build_errors.
-      include Validation
 
       property :username
       property :email
