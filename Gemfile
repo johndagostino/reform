@@ -7,3 +7,5 @@ gemspec
 # gem "disposable", github: "apotonick/disposable"
 
 gem "lotus-validations", path: "../lotus-validations"
+
+gem "veto", path: "../veto"
