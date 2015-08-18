@@ -9,7 +9,6 @@ class ActiveModelValidationTest < MiniTest::Spec
   class SessionForm < Reform::Form
     include Reform::Form::ActiveModel::Validations
 
-    include Validation
 
     property :username
     property :email
@@ -72,7 +71,6 @@ class ActiveModelValidationTest < MiniTest::Spec
     class LoginForm < Reform::Form
       include Reform::Form::ActiveModel::Validations
 
-      include Validation
 
       property :username
       property :email
@@ -114,7 +112,6 @@ class ActiveModelValidationTest < MiniTest::Spec
   # describe "overwriting a group" do
   #   class OverwritingForm < Reform::Form
   #     include Reform::Form::ActiveModel::Validations
-  #     include Validation
 
   #     property :username
   #     property :email
@@ -146,7 +143,6 @@ class ActiveModelValidationTest < MiniTest::Spec
   describe "inherit: true in same group" do
     class InheritSameGroupForm < Reform::Form
       include Reform::Form::ActiveModel::Validations
-      include Validation
 
       property :username
       property :email
@@ -178,7 +174,6 @@ class ActiveModelValidationTest < MiniTest::Spec
   describe "if: with lambda" do
     class IfWithLambdaForm < Reform::Form
       include Reform::Form::ActiveModel::Validations
-      include Validation
 
       property :username
       property :email

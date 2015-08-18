@@ -1,4 +1,4 @@
-module Reform::Form::Validation
+module Reform::Validation
   # DSL object wrapping the ValidationSet.
   # Translates the "Reform" DSL to the target validator gem's language.
   # TODO: rename so everything is in Reform::Lotus ns
@@ -72,34 +72,5 @@ module Reform::Form::Validation
         form.instance_exec(results, &depends_on)
       end
     end
-  end
-
-  module ClassMethods
-    def validation_groups
-      @groups ||= Groups.new(validation_group_class) # TODO: inheritable_attr with Inheritable::Hash
-    end
-
-    # DSL.
-    def validation(name, options={}, &block)
-      group = validation_groups.add(name, options)
-
-      group.instance_exec(&block)
-    end
-
-    def validates(name, options)
-      validation(:default, inherit: true) { validates name, options }
-    end
-
-    def validate(name, *args, &block)
-      validation(:default, inherit: true) { validate name, *args, &block }
-    end
-  end
-
-  def self.included(includer)
-    includer.extend(ClassMethods)
-  end
-
-  def valid?
-    Groups::Result.new(self.class.validation_groups).(@fields, errors, self)
   end
 end

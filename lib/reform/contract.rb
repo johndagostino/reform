@@ -43,13 +43,17 @@ module Reform
     require 'reform/contract/validate'
     include Reform::Contract::Validate
 
+    # ::validates and #valid?
+    require "reform/validation"
+    include Reform::Validation
 
-    module ValidatesWarning
-      def validates(*)
-        raise "[Reform] Please include either Reform::Form::ActiveModel::Validations or Reform::Form::Lotus in your form class."
-      end
-    end
-    extend ValidatesWarning
+
+    # module ValidatesWarning
+    #   def validates(*)
+    #     raise "[Reform] Please include either Reform::Form::ActiveModel::Validations or Reform::Form::Lotus in your form class."
+    #   end
+    # end
+    # extend ValidatesWarning
 
   private
     # DISCUSS: separate file?
