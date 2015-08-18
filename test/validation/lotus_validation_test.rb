@@ -53,19 +53,19 @@ class ValidationGroupsTest < MiniTest::Spec
 
   # partially invalid.
   # 2nd group fails.
-  it "BLAA" do
+  it do
     form.validate(username: "Helloween", email: "yo", confirm_password:"").must_equal false
-    form.errors.messages.inspect.must_equal "{:email=>[\"email can't be blank\"], :confirm_password=>[\"confirm_password can't be blank\"], :password=>[\"password can't be blank\"]}"
+    form.errors.messages.inspect.must_equal "{:email=>[\"email is not proper size\"], :confirm_password=>[\"confirm_password is not proper size\"], :password=>[\"password can't be blank\"]}"
   end
   # 3rd group fails.
   it do
     form.validate(username: "Helloween", email: "yo!", confirm_password:"").must_equal false
-    form.errors.messages.inspect.must_equal "{:confirm_password=>[\"confirm_password can't be blank\"], :password=>[\"password can't be blank\"]}"
+    form.errors.messages.inspect.must_equal "{:confirm_password=>[\"confirm_password is not proper size\"], :password=>[\"password can't be blank\"]}"
   end
   # 4th group with after: fails.
   it do
     form.validate(username: "Helloween", email: "yo!", password: "", confirm_password: "9").must_equal false
-    form.errors.messages.inspect.must_equal "{:confirm_password=>[\"confirm_password can't be blank\"], :password=>[\"password can't be blank\", \"password can't be blank\"]}"
+    form.errors.messages.inspect.must_equal "{:confirm_password=>[\"confirm_password is not proper size\"], :password=>[\"password can't be blank\", \"password is not proper size\"]}"
   end
 
 
@@ -210,6 +210,24 @@ class ValidationGroupsTest < MiniTest::Spec
     it do
       form.validate({email: 9}).must_equal false
       form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\"]}"
+    end
+  end
+
+
+  describe "multiple errors for property" do
+    class MultipleErrorsForPropertyForm < Reform::Form
+      include Reform::Form::Lotus::Validations
+
+      property :username
+      validates :username, presence: true, size: 2..3
+    end
+
+    let (:form) { MultipleErrorsForPropertyForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: ""}).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"username can't be blank\", \"username is not proper size\"]}"
     end
   end
 end
