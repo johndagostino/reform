@@ -2,10 +2,13 @@ require "active_model"
 require "reform/form/active_model/errors"
 require "uber/delegates"
 
+# NOTE: This module is unsupported from 2.2 onwards as it is impossible to write sane software with ActiveModel in an
+# environment that is not 100% Rails conform. Feel free to open tickets on rails/rails but never ever ask me to fix
+# anything in combination with ActiveModel. Thank you.
 module Reform::Form::ActiveModel
   # AM::Validations for your form.
   #
-  # Note: The preferred way for validations should be Lotus::Validations, as ActiveModel::Validation's
+  # Note: The preferred way for validations should be Veto::Validations, as ActiveModel::Validation's
   # implementation is old, very complex given that it needs to do a simple thing, is using
   # globals like @errors, and relies and more than 100 methods to be mixed into your form.
   #
@@ -24,10 +27,10 @@ module Reform::Form::ActiveModel
         class << self
           extend Uber::Delegates
           # Hooray! Delegate translation back to Reform's Validator class which contains AM::Validations.
-          delegates :validator, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
+          delegates :active_model_sucks, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
           # this is a total hack. please DO NOT BUG ME with error reports because I18N didn't work or whatever. use the veto
           # validation backend instead which has a sane implementation or i18n.
-          def validator
+          def active_model_sucks
              Class.new(Reform::Form::ActiveModel::Validations::Validator).tap { |v| v.form = self }
           end
         end
@@ -80,13 +83,12 @@ module Reform::Form::ActiveModel
       class << self
         extend Uber::Delegates
 
+        # we need a reference to the form so AM's messed up I18N implementation can infer the "correct" model_name, etc.
         def form=(form)
-          puts "@@@@@ #{form.inspect} on #{self}"
           @form = form
         end
 
         def model_name
-          puts "~~~ #{@form} on #{self}"
           return Reform::Form.model_name unless @form # for some reasons, AM:V asks Validator.model_name sometimes.
           @form.model_name
         end
