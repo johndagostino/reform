@@ -207,4 +207,61 @@ class VetoValidationTest < MiniTest::Spec
       form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
     end
   end
+
+
+  describe "::validate" do
+    class ValidateForm < Reform::Form
+      include Reform::Form::Veto::Validations
+
+      property :username
+      # property :email
+      # property :password
+
+      validation :email do
+        validates :email, presence: true
+      end
+
+      # run this is :email group is true.
+      validation :after_email, if: lambda { |results| results[:email]==true } do # extends the above.
+        validates :username, presence: true
+      end
+
+      # block gets evaled in form instance context.
+      validation :password, if: lambda { |results| email == "john@trb.org" } do
+        validates :password, presence: true
+      end
+    end
+
+    let (:form) { IfWithLambdaForm.new(Session.new) }
+
+    # valid.
+    it do
+      form.validate({username: "Strung Out", email: 9}).must_equal true
+    end
+
+    # invalid.
+    it do
+      form.validate({email: 9}).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
+    end
+  end
+
+
+  describe "multiple errors for property" do
+    class MultipleErrorsForPropertyForm < Reform::Form
+      include Reform::Form::Veto::Validations
+
+      property :username
+      validates :username, presence: true
+      validates :username, exact_length: 2
+    end
+
+    let (:form) { MultipleErrorsForPropertyForm.new(Session.new) }
+
+    # valid.
+    it "bla" do
+      form.validate({username: ""}).must_equal false
+      form.errors.messages.inspect.must_equal "[\"username is not present\", \"username is not 2 characters\"]"
+    end
+  end
 end

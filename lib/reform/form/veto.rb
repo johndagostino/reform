@@ -29,16 +29,15 @@ module Reform::Form::Veto
       # TODO: ::validate, etc.
 
       def call(fields, errors, form) # FIXME.
-        # private_errors = Reform::Form::Lotus::Errors.new # FIXME: damn, Lotus::Validator.validate does errors.clear.
-
-        validator = @validations.new
+        validator = @validations.new# TODO new(errors)
 
         validator.valid?(form) # TODO: OpenStruct.new(@fields)
 
 
-        # TODO: merge with AM.
         validator.errors.each do |name, error| # TODO: handle with proper merge, or something. validator.errors is ALWAYS AM::Errors.
-          errors.add(name, *error)
+          puts "@@@@@ #{error.inspect}"
+
+          error.each { |message| errors.add(name, message) }
         end
       end
     end
@@ -73,7 +72,7 @@ module Reform::Form::Veto
     end
 
     def messages
-      return @lotus_errors.to_s
+      return @lotus_errors.full_messages
       errors = {}
       @lotus_errors.instance_variable_get(:@errors).each do |name, err|
         errors[name] ||= []
