@@ -12,8 +12,6 @@ module Reform::Form::ActiveModel
   # What really sucks about AM:V, though, is how they infer the model_name. This always goes through
   # the object _class_ and makes it super hard to work with.
   #
-  # Implements ::validates and friends, and #valid?.
-  #
   module Validations
     def self.included(includer)
       includer.instance_eval do
@@ -25,10 +23,13 @@ module Reform::Form::ActiveModel
 
         class << self
           extend Uber::Delegates
-          # delegates :validator, :validates, :validate, :validates_with, :validate_with
-
           # Hooray! Delegate translation back to Reform's Validator class which contains AM::Validations.
-          # delegates :validator, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
+          delegates :validator, :human_attribute_name, :lookup_ancestors, :i18n_scope # Rails 3.1.
+          # this is a total hack. please DO NOT BUG ME with error reports because I18N didn't work or whatever. use the veto
+          # validation backend instead which has a sane implementation or i18n.
+          def validator
+             Class.new(Reform::Form::ActiveModel::Validations::Validator).tap { |v| v.form = self }
+          end
         end
       end
     end
@@ -56,9 +57,8 @@ module Reform::Form::ActiveModel
         @validations = Class.new(Reform::Form::ActiveModel::Validations::Validator)
       end
 
-      def validates(*args)
-        @validations.validates(*args)
-      end
+      extend Uber::Delegates
+      delegates :@validations, :validates, :validate, :validates_with, :validate_with
 
       def call(fields, errors, form) # FIXME.
         validator = @validations.new(form)
