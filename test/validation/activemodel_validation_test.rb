@@ -207,4 +207,35 @@ class ActiveModelValidationTest < MiniTest::Spec
       form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
     end
   end
+
+
+# TODO: describe "multiple errors for property" do
+
+  describe "::validate" do
+    class ValidateForm < Reform::Form
+      include Reform::Form::ActiveModel::Validations
+
+      property :username
+      validates :username, presence: true
+      validate :username_ok?#, context: :entity
+
+      def username_ok?#(value)
+        errors.add(:username, "not ok") if username == "yo"
+      end
+    end
+
+    let (:form) { ValidateForm.new(Session.new) }
+
+    # invalid.
+    it do
+      form.validate({username: "yo"}).must_equal false
+      form.errors.messages.inspect.must_equal "{:username=>[\"not ok\"]}"
+    end
+
+    # valid.
+    it do
+      form.validate({username: "not yo"}).must_equal true
+      form.errors.empty?.must_equal true
+    end
+  end
 end

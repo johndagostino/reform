@@ -209,44 +209,6 @@ class VetoValidationTest < MiniTest::Spec
   end
 
 
-  describe "::validate" do
-    class ValidateForm < Reform::Form
-      include Reform::Form::Veto::Validations
-
-      property :username
-      # property :email
-      # property :password
-
-      validation :email do
-        validates :email, presence: true
-      end
-
-      # run this is :email group is true.
-      validation :after_email, if: lambda { |results| results[:email]==true } do # extends the above.
-        validates :username, presence: true
-      end
-
-      # block gets evaled in form instance context.
-      validation :password, if: lambda { |results| email == "john@trb.org" } do
-        validates :password, presence: true
-      end
-    end
-
-    let (:form) { IfWithLambdaForm.new(Session.new) }
-
-    # valid.
-    it do
-      form.validate({username: "Strung Out", email: 9}).must_equal true
-    end
-
-    # invalid.
-    it do
-      form.validate({email: 9}).must_equal false
-      form.errors.messages.inspect.must_equal "{:username=>[\"can't be blank\"]}"
-    end
-  end
-
-
   describe "multiple errors for property" do
     class MultipleErrorsForPropertyForm < Reform::Form
       include Reform::Form::Veto::Validations
@@ -259,9 +221,38 @@ class VetoValidationTest < MiniTest::Spec
     let (:form) { MultipleErrorsForPropertyForm.new(Session.new) }
 
     # valid.
-    it "bla" do
+    it do
       form.validate({username: ""}).must_equal false
       form.errors.messages.inspect.must_equal "[\"username is not present\", \"username is not 2 characters\"]"
+    end
+  end
+
+
+  describe "::validate" do
+    class ValidateForm < Reform::Form
+      include Reform::Form::Veto::Validations
+
+      property :username
+      validates :username, presence: true
+      validate :username_ok?, context: :entity
+
+      def username_ok?(*)
+        errors.add(:username, "not ok") if username == "yo"
+      end
+    end
+
+    let (:form) { ValidateForm.new(Session.new) }
+
+    # invalid.
+    it do
+      form.validate({username: "yo"}).must_equal false
+      form.errors.messages.inspect.must_equal "[\"username not ok\"]"
+    end
+
+    # valid.
+    it do
+      form.validate({username: "not yo"}).must_equal true
+      form.errors.empty?.must_equal true
     end
   end
 end

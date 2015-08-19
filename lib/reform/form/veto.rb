@@ -20,16 +20,18 @@ module Reform::Form::Veto
 
     class Group
       def initialize
-        @validations = Class.new(Validator)
+        @validator = Class.new(Validator)
       end
 
       def validates(*args, &block)
-        @validations.validates(*args, &block)
+        @validator.validates(*args, &block)
       end
-      # TODO: ::validate, etc.
+      def validate(*args, &block)
+        @validator.validate(*args, &block)
+      end
 
       def call(fields, errors, form) # FIXME.
-        validator = @validations.new# TODO new(errors)
+        validator = @validator.new# TODO new(errors)
 
         validator.valid?(form) # TODO: OpenStruct.new(@fields)
 
